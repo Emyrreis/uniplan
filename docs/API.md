@@ -1,4 +1,4 @@
-# API do UniPlan — contrato (v1)
+# API do UniPlan — contrato (v1.1)
 
 Contrato entre o app e o servidor. O servidor ainda vai ser construído
 (mockado primeiro, como na aula), mas o app já pode ser escrito contra este
@@ -6,6 +6,8 @@ documento: se algo mudar, muda aqui primeiro.
 
 As convenções seguem o contrato do `carteira-digital`, o mesmo formato que o
 `ApiClient` do core já entende.
+
+**Mudanças na v1.1:** notificações (`/notifications`), datas do semestre no usuário, cadastro e "esqueci minha senha", `expiresAt` no login, fuso horário no `/overview` e regras de validação explícitas.
 
 ---
 
@@ -71,7 +73,7 @@ Toda resposta de erro tem o mesmo corpo:
 | 401 | `invalid_credentials` | e-mail ou senha errados no login | `UnauthorizedError(invalidCredentials: true)` |
 | 401 | `token_expired` | token vencido | `UnauthorizedError(expired: true)` |
 | 404 | `not_found` | o recurso não existe (ou não é do usuário) | `NotFoundError` |
-| 409 | `conflict` | ex.: excluir disciplina que ainda tem atividades | `UnknownError` |
+| 409 | `conflict` | e-mail já cadastrado; excluir disciplina que ainda tem atividades | `UnknownError` |
 | 422 | `validation_failed` | corpo com campos inválidos | `ValidationError(fields)` |
 | 500 | `internal_error` | falha no servidor | `ServerError` |
 
@@ -91,6 +93,8 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
   "course": "Sistemas de Informação",
   "period": 5,
   "term": "2026/2",
+  "termStartsOn": "2026-08-03",
+  "termEndsOn": "2026-12-12",
   "avatarUrl": null,
   "createdAt": "2026-10-30T12:00:00Z"
 }
@@ -101,6 +105,7 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
 | `course` | string \| null | nome do curso |
 | `period` | int \| null | período atual (1–12) |
 | `term` | string | semestre letivo atual, `AAAA/1` ou `AAAA/2` |
+| `termStartsOn` / `termEndsOn` | data \| null | início e fim do semestre; é daqui que sai o progresso da Home. `null` enquanto o aluno não informar |
 
 ### Subject (disciplina)
 
@@ -180,6 +185,7 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
   "date": "2026-10-30",
   "overallAverage": 8.2,
   "pendingCount": 4,
+  "unreadNotifications": 3,
   "semester": {
     "term": "2026/2",
     "startsOn": "2026-08-03",
@@ -204,6 +210,37 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
 }
 ```
 
+| Campo | Observação |
+|---|---|
+| `unreadNotifications` | número do contador do sino |
+| `semester` | `null` quando o usuário ainda não informou as datas do semestre (a Home esconde a barra de progresso) |
+| `semester.progress` | de 0 a 1: dias passados ÷ dias do semestre |
+
+### Notification
+
+```json
+{
+  "id": "ntf_12",
+  "kind": "due_soon",
+  "title": "Prazo amanhã",
+  "text": "Prova 2 de Inteligência Artificial é amanhã às 08:00.",
+  "read": false,
+  "createdAt": "2026-10-30T13:00:00Z",
+  "target": { "type": "activity", "id": "act_03" }
+}
+```
+
+| Campo | Tipo | Observação |
+|---|---|---|
+| `kind` | enum | `due_soon` \| `grade_posted` \| `absence_risk` \| `class_today`, que definem o ícone e a cor no pop-up |
+| `target` | objeto \| null | para onde o toque leva: `{ "type": "activity" \| "subject", "id": "..." }` |
+
+**Quando o servidor cria cada uma** (o app só lista):
+- `due_soon`: atividade não entregue com `dueAt` nas próximas 24 h (uma vez por atividade).
+- `grade_posted`: quando uma nota é lançada pelo `PATCH /activities/:id`.
+- `absence_risk`: quando as faltas de uma disciplina passam de 75% de `maxAbsences` (uma vez por disciplina).
+- `class_today`: no começo do dia, uma por aula do dia, com bloco e sala no texto.
+
 ---
 
 ## 3. Endpoints
@@ -211,11 +248,16 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
 | Método | Caminho | Cena do app que usa |
 |---|---|---|
 | GET | `/health` | — (checagem manual) |
+| POST | `/auth/register` | Cadastro |
 | POST | `/auth/login` | Login |
+| POST | `/auth/forgot-password` | Login ("Esqueci minha senha") |
 | POST | `/auth/logout` | Perfil |
 | GET | `/me` | Perfil |
 | PUT | `/me` | Perfil |
 | GET | `/overview` | Hoje |
+| GET | `/notifications` | Hoje (pop-up do sino) |
+| PATCH | `/notifications/:id` | Hoje (tocar numa notificação) |
+| POST | `/notifications/read-all` | Hoje ("Marcar todas como lidas") |
 | GET | `/schedule` | Onde é minha aula? (salas da semana) |
 | GET | `/subjects` | Disciplinas, Nova atividade (lista de disciplinas) |
 | POST | `/subjects` | Nova disciplina |
@@ -230,7 +272,7 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
 | PATCH | `/activities/:id` | Marcar entregue / lançar nota |
 | DELETE | `/activities/:id` | Detalhe da atividade |
 
-A Splash não chama a API: ela só lê a sessão salva no aparelho e decide entre Login e Hoje.
+A Splash não chama a API: ela só lê a sessão salva no aparelho (e o `expiresAt`) e decide entre Login e Hoje. O tema claro/escuro também não passa pela API: é uma preferência guardada no aparelho.
 
 ---
 
@@ -242,6 +284,36 @@ Sem token.
 ```json
 { "status": "ok" }
 ```
+
+---
+
+### POST /auth/register
+
+Sem token. Cria a conta e já devolve a sessão, como o login.
+
+**Request**
+```json
+{
+  "name": "Emilly Reis",
+  "email": "emilly@projetofinal.dev",
+  "password": "final2026"
+}
+```
+
+| Campo | Validação |
+|---|---|
+| `name` | 2–60 caracteres |
+| `email` | e-mail válido, ainda não cadastrado |
+| `password` | mínimo de 6 caracteres |
+
+**201**: mesmo corpo do `200` do login (`token`, `expiresAt`, `user`).
+
+**409** `conflict`
+```json
+{ "error": { "code": "conflict", "message": "Já existe uma conta com este e-mail." } }
+```
+
+**422** `validation_failed` com `fields` por campo.
 
 ---
 
@@ -258,9 +330,12 @@ Sem token.
 ```json
 {
   "token": "tk_9f2c1a...",
+  "expiresAt": "2026-12-06T23:00:00Z",
   "user": { /* User */ }
 }
 ```
+
+O token vale 30 dias. O app guarda `expiresAt` na sessão e, se a data já passou, a Splash manda direto para o Login. Se o servidor recusar o token antes disso, ele responde `401 token_expired`, e o app faz o mesmo.
 
 **401** `invalid_credentials`
 ```json
@@ -282,6 +357,23 @@ Sem token.
 
 ---
 
+### POST /auth/forgot-password
+
+Sem token. Pede um e-mail de redefinição de senha.
+
+**Request**
+```json
+{ "email": "emilly@projetofinal.dev" }
+```
+
+**204** sem corpo, **sempre**, mesmo que o e-mail não exista. Assim ninguém descobre quais e-mails têm conta. O app mostra "Se o e-mail estiver cadastrado, você vai receber as instruções."
+
+**422** só quando o e-mail tem formato inválido.
+
+> No servidor mockado, o envio é só simulado; a redefinição em si fica para uma versão futura.
+
+---
+
 ### POST /auth/logout
 
 Invalida o token atual.
@@ -298,7 +390,7 @@ Invalida o token atual.
 
 ### PUT /me
 
-Atualiza só os dados de perfil. O e-mail não muda por aqui.
+Atualiza os dados de perfil e o semestre atual. O e-mail não muda por aqui.
 
 **Request**
 ```json
@@ -306,9 +398,19 @@ Atualiza só os dados de perfil. O e-mail não muda por aqui.
   "name": "Emilly Reis",
   "course": "Sistemas de Informação",
   "period": 5,
+  "term": "2026/2",
+  "termStartsOn": "2026-08-03",
+  "termEndsOn": "2026-12-12",
   "avatarUrl": null
 }
 ```
+
+| Campo | Validação |
+|---|---|
+| `name` | obrigatório, 2–60 caracteres |
+| `period` | `null` ou de 1 a 12 |
+| `term` | formato `AAAA/1` ou `AAAA/2` |
+| `termStartsOn` / `termEndsOn` | as duas juntas ou nenhuma; início antes do fim |
 
 **200** → `User` atualizado
 
@@ -318,7 +420,10 @@ Atualiza só os dados de perfil. O e-mail não muda por aqui.
   "error": {
     "code": "validation_failed",
     "message": "Alguns campos estão inválidos.",
-    "fields": { "name": "O nome é obrigatório.", "period": "Use um período de 1 a 12." }
+    "fields": {
+      "name": "O nome é obrigatório.",
+      "termEndsOn": "O fim do semestre precisa ser depois do início."
+    }
   }
 }
 ```
@@ -333,9 +438,64 @@ Tudo o que a Home "Hoje" mostra, numa chamada só.
 
 | Parâmetro | Obrigatório | Exemplo | Padrão |
 |---|---|---|---|
-| `date` | não | `2026-10-30` | hoje (no fuso do servidor) |
+| `tz` | sim | `America/Araguaina` | fuso do aparelho; define o que é "hoje" e os horários das aulas do dia |
+| `date` | não | `2026-10-30` | hoje no fuso `tz` |
+
+**400** `bad_request` quando `tz` falta ou não é um fuso válido.
 
 **200** → `Overview`
+
+---
+
+### GET /notifications
+
+As notificações do pop-up do sino, das mais novas para as mais antigas.
+
+**Query**
+
+| Parâmetro | Exemplo | Padrão | Observação |
+|---|---|---|---|
+| `unread` | `true` | — | só as não lidas |
+| `page` | `1` | `1` | |
+| `pageSize` | `20` | `20` | máx. 100 |
+
+**200**
+```json
+{
+  "items": [ /* Notification */ ],
+  "page": 1,
+  "pageSize": 20,
+  "total": 4
+}
+```
+
+O servidor guarda as notificações por 30 dias.
+
+---
+
+### PATCH /notifications/:id
+
+Marca uma notificação como lida (ou não lida). O app chama ao tocar nela e depois abre o `target`.
+
+**Request**
+```json
+{ "read": true }
+```
+
+**200** → `Notification` atualizada · **404**
+
+---
+
+### POST /notifications/read-all
+
+"Marcar todas como lidas". Sem corpo.
+
+**200**
+```json
+{ "updated": 3 }
+```
+
+Depois disso, o app zera o contador do sino sem precisar chamar o `/overview` de novo.
 
 ---
 
@@ -429,7 +589,7 @@ Disciplinas do semestre atual, em ordem alfabética. A lista é pequena e não �
 |---|---|---|
 | `name` | sim | 2–60 caracteres |
 | `color` | não (`primary`) | um dos 4 valores |
-| `schedule` | não (`[]`) | `start` < `end`, `weekday` de 1 a 7, `block` e `room` obrigatórios em cada aula (1–20 caracteres) |
+| `schedule` | não (`[]`) | `start` < `end`, `weekday` de 1 a 7, `block` e `room` obrigatórios em cada aula (1–20 caracteres). Aulas **da mesma disciplina** no mesmo dia não podem se sobrepor (422). Entre disciplinas diferentes, a sobreposição é permitida (choque de horário é decisão do aluno) |
 | `passingGrade` | não (7.0) | de 0 a 10 |
 | `maxAbsences` | não (0 = sem limite) | inteiro ≥ 0 |
 
@@ -552,7 +712,7 @@ Ordenação: `dueAt` crescente (o mais urgente primeiro). O app agrupa por dia p
 | `subjectId` | sim | disciplina existente do usuário |
 | `title` | sim | 2–80 caracteres |
 | `kind` | sim | um dos 4 valores |
-| `dueAt` | sim | data e hora ISO 8601 |
+| `dueAt` | sim | data e hora ISO 8601. Datas no passado **são permitidas**, para registrar atividades que já aconteceram |
 | `weight` | não (1) | > 0 |
 | `maxGrade` | não (10) | > 0 |
 | `note` | não | até 500 caracteres |
@@ -636,13 +796,15 @@ Na tela, segue o fluxo do `carteira-digital`: exclui, faz `pop(true)` e mostra "
 | Cena | Server (protocolo) | Chamadas |
 |---|---|---|
 | Splash | `ServerSplash.hasSession()` | nenhuma; lê o storage |
-| Login | `ServerLogin.fetchLogin()` | `POST /auth/login` |
-| Hoje | `ServerToday.fetchOverview()` | `GET /overview` |
+| Login | `ServerLogin.fetchLogin()`, `requestPasswordReset()` | `POST /auth/login`, `POST /auth/forgot-password` |
+| Cadastro | `ServerRegister.register()` | `POST /auth/register` |
+| Hoje | `ServerToday.fetchOverview()` | `GET /overview?tz=` |
+| Hoje: pop-up do sino | `ServerNotifications` | `GET /notifications`, `PATCH /notifications/:id`, `POST /notifications/read-all` |
 | Onde é minha aula? | `ServerRooms.fetchSchedule(weekday, query)` | `GET /schedule?weekday=&q=` |
 | Disciplinas | `ServerSubjects.fetchSubjects()` | `GET /subjects` |
 | Detalhe da disciplina | `ServerSubjectDetail` | `GET /subjects/:id` + `GET /activities?subjectId=` em paralelo; `POST /subjects/:id/absences` |
 | Atividades | `ServerActivities` | `GET /activities?status=&q=`; `PATCH /activities/:id` |
 | Nova atividade | `ServerActivityForm` | `GET /subjects` (lista de disciplinas); `POST /activities` |
-| Perfil | `ServerProfile` | `GET /me`, `PUT /me`, `POST /auth/logout` |
+| Perfil | `ServerProfile` | `GET /me`, `PUT /me` (dados e semestre), `POST /auth/logout` |
 
 Cada `Server*` é uma interface (protocolo) com duas implementações: a **mock**, com dados em memória para desenvolver sem servidor, e a **real**, que chama a API. Trocar uma pela outra é só mudar a linha da Factory da cena.
