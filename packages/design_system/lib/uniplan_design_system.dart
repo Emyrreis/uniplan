@@ -33,6 +33,8 @@ export 'src/components/chip_group/chip_group_factory.dart';
 export 'src/components/chip_group/chip_group_view_model.dart';
 export 'src/components/class_card/class_card_factory.dart';
 export 'src/components/class_card/class_card_view_model.dart';
+export 'src/components/logo/logo_factory.dart';
+export 'src/components/logo/logo_view_model.dart';
 export 'src/components/nav_bar/nav_bar_component.dart' show navBarHeight;
 export 'src/components/nav_bar/nav_bar_factory.dart';
 export 'src/components/nav_bar/nav_bar_view_model.dart';

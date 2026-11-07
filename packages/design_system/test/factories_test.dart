@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:uniplan_design_system/uniplan_design_system.dart';
 import 'package:uniplan_design_system/src/components/activity_tile/activity_tile_component.dart';
 import 'package:uniplan_design_system/src/components/buttons/button_component.dart';
+import 'package:uniplan_design_system/src/components/logo/logo_component.dart';
 import 'package:uniplan_design_system/src/components/state_view/state_view_component.dart';
 import 'package:uniplan_design_system/src/components/text_field/text_field_component.dart';
 
@@ -57,6 +58,14 @@ void main() {
           ),
         ),
         isA<CheckActivityTileComponent>(),
+      );
+    });
+
+    test('LogoFactory', () {
+      expect(LogoFactory.create(const LogoViewModel()), isA<MarkLogoComponent>());
+      expect(
+        LogoFactory.create(const LogoViewModel(type: LogoType.full)),
+        isA<FullLogoComponent>(),
       );
     });
 
@@ -141,6 +150,9 @@ void main() {
                   const ToggleViewModel(label: 'Tema escuro', value: true),
                 ),
                 AvatarFactory.create(const AvatarViewModel(name: 'Emilly Reis')),
+                LogoFactory.create(
+                  const LogoViewModel(type: LogoType.full, tagline: 'Frase'),
+                ),
               ],
             ),
           ),
@@ -149,6 +161,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Mobile II'), findsOneWidget);
       expect(find.text('ER'), findsOneWidget);
+      expect(find.text('UniPlan'), findsOneWidget);
     });
   }
 }
