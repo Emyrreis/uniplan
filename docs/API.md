@@ -1,4 +1,4 @@
-# API do UniPlan — contrato (v1.1)
+# API do UniPlan — contrato (v1.2)
 
 Contrato entre o app e o servidor. O servidor ainda vai ser construído
 (mockado primeiro, como na aula), mas o app já pode ser escrito contra este
@@ -6,6 +6,8 @@ documento: se algo mudar, muda aqui primeiro.
 
 As convenções seguem o contrato do `carteira-digital`, o mesmo formato que o
 `ApiClient` do core já entende.
+
+**Mudanças na v1.2:** foto de perfil (`PUT/DELETE /me/avatar`) e a tela Editar perfil.
 
 **Mudanças na v1.1:** notificações (`/notifications`), datas do semestre no usuário, cadastro e "esqueci minha senha", `expiresAt` no login, fuso horário no `/overview` e regras de validação explícitas.
 
@@ -74,6 +76,8 @@ Toda resposta de erro tem o mesmo corpo:
 | 401 | `token_expired` | token vencido | `UnauthorizedError(expired: true)` |
 | 404 | `not_found` | o recurso não existe (ou não é do usuário) | `NotFoundError` |
 | 409 | `conflict` | e-mail já cadastrado; excluir disciplina que ainda tem atividades | `UnknownError` |
+| 413 | `payload_too_large` | foto de perfil acima de 5 MB | `ValidationError` |
+| 415 | `unsupported_media_type` | foto que não é JPG/PNG | `ValidationError` |
 | 422 | `validation_failed` | corpo com campos inválidos | `ValidationError(fields)` |
 | 500 | `internal_error` | falha no servidor | `ServerError` |
 
@@ -90,8 +94,8 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
   "id": "usr_01",
   "name": "Emilly Reis",
   "email": "emilly@projetofinal.dev",
-  "course": "Sistemas de Informação",
-  "period": 5,
+  "course": "Engenharia de Software",
+  "period": 6,
   "term": "2026/2",
   "termStartsOn": "2026-08-03",
   "termEndsOn": "2026-12-12",
@@ -253,7 +257,9 @@ Ao receber qualquer **401** fora do login, o app limpa a sessão salva e volta p
 | POST | `/auth/forgot-password` | Login ("Esqueci minha senha") |
 | POST | `/auth/logout` | Perfil |
 | GET | `/me` | Perfil |
-| PUT | `/me` | Perfil |
+| PUT | `/me` | Editar perfil |
+| PUT | `/me/avatar` | Editar perfil (foto) |
+| DELETE | `/me/avatar` | Editar perfil (remover foto) |
 | GET | `/overview` | Hoje |
 | GET | `/notifications` | Hoje (pop-up do sino) |
 | PATCH | `/notifications/:id` | Hoje (tocar numa notificação) |
@@ -390,14 +396,14 @@ Invalida o token atual.
 
 ### PUT /me
 
-Atualiza os dados de perfil e o semestre atual. O e-mail não muda por aqui.
+Atualiza os dados de perfil e o semestre atual. É a tela **Editar perfil**. O e-mail não muda por aqui, e a foto vai pelo `PUT /me/avatar`.
 
 **Request**
 ```json
 {
   "name": "Emilly Reis",
-  "course": "Sistemas de Informação",
-  "period": 5,
+  "course": "Engenharia de Software",
+  "period": 6,
   "term": "2026/2",
   "termStartsOn": "2026-08-03",
   "termEndsOn": "2026-12-12",
@@ -427,6 +433,50 @@ Atualiza os dados de perfil e o semestre atual. O e-mail não muda por aqui.
   }
 }
 ```
+
+---
+
+### PUT /me/avatar
+
+Envia ou troca a foto de perfil. É o único endpoint que **não usa JSON**: o corpo é
+`multipart/form-data` com o arquivo no campo `file`.
+
+**Request**
+```
+Content-Type: multipart/form-data; boundary=...
+
+file: <imagem JPG ou PNG>
+```
+
+| Regra | Valor |
+|---|---|
+| Tipos aceitos | `image/jpeg`, `image/png` |
+| Tamanho máximo | 5 MB |
+| Tratamento | o servidor recorta a imagem em quadrado (centro) e salva em 512 × 512 |
+
+**200** → `User` atualizado, com o novo `avatarUrl`
+```json
+{ "...": "...", "avatarUrl": "http://10.0.2.2:8080/avatars/usr_01.jpg?v=1730930000" }
+```
+O `?v=` muda a cada envio, para o app não mostrar a foto antiga do cache.
+
+**413** `payload_too_large`
+```json
+{ "error": { "code": "payload_too_large", "message": "A imagem passa de 5 MB." } }
+```
+
+**415** `unsupported_media_type`
+```json
+{ "error": { "code": "unsupported_media_type", "message": "Envie uma imagem JPG ou PNG." } }
+```
+
+---
+
+### DELETE /me/avatar
+
+Remove a foto. O app volta a mostrar as iniciais.
+
+**200** → `User` atualizado, com `avatarUrl: null`
 
 ---
 
@@ -805,6 +855,7 @@ Na tela, segue o fluxo do `carteira-digital`: exclui, faz `pop(true)` e mostra "
 | Detalhe da disciplina | `ServerSubjectDetail` | `GET /subjects/:id` + `GET /activities?subjectId=` em paralelo; `POST /subjects/:id/absences` |
 | Atividades | `ServerActivities` | `GET /activities?status=&q=`; `PATCH /activities/:id` |
 | Nova atividade | `ServerActivityForm` | `GET /subjects` (lista de disciplinas); `POST /activities` |
-| Perfil | `ServerProfile` | `GET /me`, `PUT /me` (dados e semestre), `POST /auth/logout` |
+| Perfil | `ServerProfile` | `GET /me`, `POST /auth/logout` (depois de confirmar "Sair da conta?", limpa a sessão e volta para o Login) |
+| Editar perfil | `ServerEditProfile` | `PUT /me` (dados e semestre), `PUT /me/avatar`, `DELETE /me/avatar` |
 
 Cada `Server*` é uma interface (protocolo) com duas implementações: a **mock**, com dados em memória para desenvolver sem servidor, e a **real**, que chama a API. Trocar uma pela outra é só mudar a linha da Factory da cena.
