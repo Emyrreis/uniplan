@@ -28,8 +28,8 @@ class CardsViewModel extends GalleryViewModel {
   StatCardViewModel get averageCard => const StatCardViewModel(
     type: StatCardType.card,
     label: 'Média atual',
-    value: '9,1',
-    caption: 'mínimo 7,0 · Aprovada',
+    value: '9,4',
+    caption: 'mínimo 7,0 · Em curso',
   );
 
   StatCardViewModel get absencesCard => StatCardViewModel(
@@ -54,8 +54,8 @@ class CardsViewModel extends GalleryViewModel {
       name: 'Mobile II',
       initials: 'M2',
       tone: AppTone.primary,
-      professor: 'Prof. [Nome]',
-      averageLabel: '9,1',
+      professor: 'Prof.ª Carla Mendes · Bloco C',
+      averageLabel: '9,4',
       status: const BadgeViewModel(label: 'Aprovada', tone: AppTone.primary),
       absences: _absences,
       maxAbsences: _maxAbsences,
@@ -65,8 +65,8 @@ class CardsViewModel extends GalleryViewModel {
       name: 'Otimização para Sistemas',
       initials: 'OS',
       tone: AppTone.success,
-      professor: 'Prof. [Nome]',
-      averageLabel: '6,2',
+      professor: 'Prof. Marcelo Tavares · Bloco B',
+      averageLabel: '8,8',
       status: const BadgeViewModel(label: 'Em risco', tone: AppTone.warning),
       absences: 14,
       maxAbsences: _maxAbsences,
@@ -130,7 +130,7 @@ class CardsViewModel extends GalleryViewModel {
     const items = [
       (title: 'Lista 3 — Simplex', subject: 'Otimização · 23:59', kind: ActivityKind.exercise),
       (title: 'Seminário de IA', subject: 'Inteligência Artificial · 19:00', kind: ActivityKind.presentation),
-      (title: 'Diagrama de casos de uso', subject: 'Eng. de Software · 19:00', kind: ActivityKind.assignment),
+      (title: 'Relatório de casos de teste', subject: 'Testes de Software · 19:00', kind: ActivityKind.assignment),
     ];
     return [
       for (var i = 0; i < items.length; i++)
@@ -156,10 +156,16 @@ class CardsViewModel extends GalleryViewModel {
     trailingLabel: '16 semanas',
   );
 
-  List<AvatarViewModel> get avatars => const [
-    AvatarViewModel(name: 'Emilly Reis', size: 56),
-    AvatarViewModel(name: 'Ana', tone: AppTone.primary),
-    AvatarViewModel(name: 'Turma Mobile', size: 40, tone: AppTone.success),
+  List<AvatarViewModel> get avatars => [
+    AvatarViewModel(
+      name: 'Emilly Reis',
+      size: 56,
+      onEdit: () => GalleryCoordinator.showMessage(
+        'Abrir: Escolher da galeria · Tirar foto · Remover foto',
+      ),
+    ),
+    const AvatarViewModel(name: 'Ana', tone: AppTone.primary),
+    const AvatarViewModel(name: 'Turma Mobile', size: 40, tone: AppTone.success),
   ];
 }
 
@@ -223,7 +229,7 @@ class CardsPage extends StatelessWidget {
             for (final tile in viewModel.checkTiles)
               ActivityTileFactory.create(tile),
             SectionHeaderFactory.create(
-              const SectionHeaderViewModel(title: 'Avatar'),
+              const SectionHeaderViewModel(title: 'Avatar (o primeiro é editável)'),
             ),
             Row(
               children: [

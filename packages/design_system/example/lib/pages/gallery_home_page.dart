@@ -6,6 +6,7 @@ import '../page_host.dart';
 import 'buttons_page.dart';
 import 'cards_page.dart';
 import 'inputs_page.dart';
+import 'register_demo_page.dart';
 import 'rooms_demo_page.dart';
 import 'selection_page.dart';
 import 'states_page.dart';
@@ -22,7 +23,7 @@ typedef GallerySection = ({
 /// Menu da galeria, dividido em grupos.
 class GalleryHomeViewModel extends GalleryViewModel {
   static final List<GallerySection> foundations = [
-    (title: 'Cores, tipografia e tons', icon: Icons.palette_outlined, page: TokensPage.new),
+    (title: 'Logo, cores, tipografia e tons', icon: Icons.palette_outlined, page: TokensPage.new),
   ];
 
   static final List<GallerySection> components = [
@@ -34,6 +35,7 @@ class GalleryHomeViewModel extends GalleryViewModel {
   ];
 
   static final List<GallerySection> screens = [
+    (title: 'Cadastro montado', icon: Icons.person_add_alt, page: RegisterDemoPage.new),
     (title: 'Tela "Hoje" montada', icon: Icons.phone_android, page: TodayDemoPage.new),
     (title: 'Onde é minha aula? (salas)', icon: Icons.place_outlined, page: RoomsDemoPage.new),
   ];

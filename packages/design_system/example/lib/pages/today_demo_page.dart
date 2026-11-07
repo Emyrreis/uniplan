@@ -47,13 +47,13 @@ class TodayDemoViewModel extends GalleryViewModel {
   StatCardViewModel get average => const StatCardViewModel(
     type: StatCardType.onHeader,
     label: 'Média geral',
-    value: '8,2',
+    value: '9,2',
   );
 
   StatCardViewModel get pending => StatCardViewModel(
     type: StatCardType.onHeader,
     label: 'Pendências',
-    value: '${3 - _done.length}',
+    value: '${7 - _done.length}',
     suffix: 'entregas',
     highlight: true,
   );
@@ -79,11 +79,11 @@ class TodayDemoViewModel extends GalleryViewModel {
       onTap: () => GalleryCoordinator.open(const RoomsDemoPage()),
     ),
     ClassCardViewModel(
-      subject: 'Inteligência Artificial',
+      subject: 'Gerência de Projetos',
       time: '20:50',
-      block: 'C',
-      room: 'Sala 204',
-      tone: AppTone.accent,
+      block: 'A',
+      room: 'Sala 108',
+      tone: AppTone.warning,
       onTap: () => GalleryCoordinator.open(const RoomsDemoPage()),
     ),
   ];
@@ -98,8 +98,8 @@ class TodayDemoViewModel extends GalleryViewModel {
   List<ActivityTileViewModel> get tasks {
     const items = [
       (title: 'Prova 2', subject: 'Inteligência Artificial', due: 'Amanhã', soon: true, kind: ActivityKind.exam),
-      (title: 'Projeto final', subject: 'Mobile II', due: 'Em 5 dias', soon: false, kind: ActivityKind.assignment),
-      (title: 'Lista 3 — Simplex', subject: 'Otimização', due: '12/11', soon: false, kind: ActivityKind.exercise),
+      (title: 'Relatório de casos de teste', subject: 'Testes de Software', due: 'Seg, 02/11', soon: false, kind: ActivityKind.assignment),
+      (title: 'Lista 3 — Simplex', subject: 'Otimização', due: 'Ter, 03/11', soon: false, kind: ActivityKind.exercise),
     ];
     return [
       for (var i = 0; i < items.length; i++)

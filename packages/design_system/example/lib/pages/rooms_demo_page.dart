@@ -13,13 +13,15 @@ class RoomsViewModel extends GalleryViewModel {
   int _day = 4; // sexta-feira ("hoje" na demonstração)
   String _query = '';
 
-  static const _mobile = (subject: 'Mobile II', tone: AppTone.primary);
-  static const _ia = (subject: 'Inteligência Artificial', tone: AppTone.accent);
-  static const _os = (subject: 'Otimização para Sistemas', tone: AppTone.success);
-  static const _es = (subject: 'Engenharia de Software', tone: AppTone.ink);
+  static const _mobile = (subject: 'Mobile II', professor: 'Prof.ª Carla Mendes', tone: AppTone.primary);
+  static const _ia = (subject: 'Inteligência Artificial', professor: 'Prof. Ricardo Alves', tone: AppTone.accent);
+  static const _os = (subject: 'Otimização para Sistemas', professor: 'Prof. Marcelo Tavares', tone: AppTone.success);
+  static const _ts = (subject: 'Testes de Software', professor: 'Prof.ª Juliana Rocha', tone: AppTone.ink);
+  static const _dw = (subject: 'Desenvolvimento Web', professor: 'Prof. André Lima', tone: AppTone.primary);
+  static const _gp = (subject: 'Gerência de Projetos', professor: 'Prof.ª Patrícia Nunes', tone: AppTone.warning);
 
   static ScheduleTileViewModel _at(
-    ({String subject, AppTone tone}) s,
+    ({String subject, String professor, AppTone tone}) s,
     String start,
     String end,
     String block,
@@ -28,7 +30,7 @@ class RoomsViewModel extends GalleryViewModel {
   ) {
     return ScheduleTileViewModel(
       subject: s.subject,
-      professor: 'Prof. [Nome]',
+      professor: s.professor,
       tone: s.tone,
       start: start,
       end: end,
@@ -40,7 +42,7 @@ class RoomsViewModel extends GalleryViewModel {
 
   static final List<WeekDay> week = [
     (short: 'Seg', name: 'Segunda-feira', classes: [
-      _at(_es, '19:00', '20:40', 'A', 'Sala 105', '1º andar'),
+      _at(_ts, '19:00', '20:40', 'D', 'Lab 1', 'Térreo'),
       _at(_ia, '20:50', '22:30', 'C', 'Sala 204', '2º andar'),
     ]),
     (short: 'Ter', name: 'Terça-feira', classes: [
@@ -48,16 +50,20 @@ class RoomsViewModel extends GalleryViewModel {
     ]),
     (short: 'Qua', name: 'Quarta-feira', classes: [
       _at(_mobile, '19:00', '20:40', 'C', 'Lab 3', 'Térreo'),
-      _at(_es, '20:50', '22:30', 'A', 'Sala 105', '1º andar'),
+      _at(_dw, '20:50', '22:30', 'A', 'Lab 5', '1º andar'),
     ]),
     (short: 'Qui', name: 'Quinta-feira', classes: [
       _at(_ia, '19:00', '20:40', 'C', 'Sala 204', '2º andar'),
+      _at(_ts, '20:50', '22:30', 'D', 'Lab 1', 'Térreo'),
     ]),
     (short: 'Sex', name: 'Sexta-feira', classes: [
       _at(_mobile, '19:00', '20:40', 'C', 'Lab 3', 'Térreo'),
-      _at(_ia, '20:50', '22:30', 'C', 'Sala 204', '2º andar'),
+      _at(_gp, '20:50', '22:30', 'A', 'Sala 108', '1º andar'),
     ]),
-    (short: 'Sáb', name: 'Sábado', classes: const []),
+    (short: 'Sáb', name: 'Sábado', classes: [
+      _at(_dw, '08:00', '09:40', 'A', 'Lab 5', '1º andar'),
+      _at(_gp, '09:50', '11:30', 'B', 'Auditório', 'Térreo'),
+    ]),
   ];
 
   SheetScaffoldViewModel get scaffold => const SheetScaffoldViewModel(

@@ -14,6 +14,20 @@ class TokensViewModel extends GalleryViewModel {
     trailing: GalleryCoordinator.themeButton,
   );
 
+  /// A logo nas duas variações: só o símbolo e completa.
+  List<LogoViewModel> get logos => const [
+    LogoViewModel(size: 64),
+    LogoViewModel(size: 40),
+    LogoViewModel(size: 24),
+  ];
+
+  LogoViewModel get fullLogo => const LogoViewModel(
+    type: LogoType.full,
+    size: 56,
+    onHeader: true,
+    tagline: 'Seu semestre organizado num só lugar',
+  );
+
   List<Swatch> swatches(AppColorPalette p) => [
     (name: 'primary', color: p.primary, onColor: p.onPrimary),
     (name: 'primaryContainer', color: p.primaryContainer, onColor: p.onPrimaryContainer),
@@ -54,9 +68,22 @@ class TokensPage extends StatelessWidget {
         final textTheme = Theme.of(context).textTheme;
         return SheetScaffoldFactory.create(
           viewModel.scaffold,
+          // Logo completa sobre a faixa do topo, como no Login.
+          header: LogoFactory.create(viewModel.fullLogo),
           body: ListView(
             padding: const EdgeInsets.all(AppSpacing.screen),
             children: [
+              SectionHeaderFactory.create(
+                const SectionHeaderViewModel(title: 'Logo · símbolo'),
+              ),
+              Row(
+                children: [
+                  for (final logo in viewModel.logos) ...[
+                    LogoFactory.create(logo),
+                    const SizedBox(width: AppSpacing.lg),
+                  ],
+                ],
+              ),
               SectionHeaderFactory.create(
                 const SectionHeaderViewModel(title: 'Cores do tema atual'),
               ),
