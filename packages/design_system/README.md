@@ -18,6 +18,16 @@ MaterialApp(
 ButtonFactory.create(viewModel.submitButton);
 ```
 
+## Logo
+
+`LogoFactory.create(LogoViewModel(...))`, desenhada em código (`LogoMarkPainter`)
+na mesma grade 64 × 64 dos SVGs de `docs/marca/`:
+
+- **mark**: só o símbolo (quadrado arredondado, "U" e ponto laranja).
+- **full**: símbolo + "UniPlan" + frase opcional (Login e Cadastro).
+- `onHeader: true` usa quadrado branco e "U" violeta, para a faixa do topo.
+  Fora dela, quadrado violeta e "U" branco.
+
 ## Paleta
 
 | Token | Claro | Escuro | Uso |
@@ -51,7 +61,8 @@ Cada pasta em `lib/src/components/` tem `*_view_model.dart`,
 | **Toggle** (linha com switch) | — | `onChanged(bool)` |
 | **Badge** | por `AppTone` | — |
 | **ProgressBar** | labeled · thin | — |
-| **Avatar** | foto ou iniciais | — |
+| **Avatar** | foto ou iniciais; editável com selo de câmera | `onEdit` (abre as opções de foto) |
+| **Logo** | mark · full | — |
 | **SectionHeader** | com ou sem link | `onAction` |
 | **StatCard** | onHeader · card | botão opcional (`action`) |
 | **SubjectCard** | — | `onTap` |
@@ -68,7 +79,13 @@ Componentes compostos reaproveitam os outros **pela Factory**: o
 
 ## Sample app
 
-`example/` é a galeria: Fundamentos (cores, tipografia e tons), Botões,
-Campos, Seleção, Cards e tiles, Estados, a tela "Hoje" montada só com
-componentes e a tela "Onde é minha aula?" (salas por dia da semana). O botão no topo de todas as páginas alterna o tema
-claro/escuro.
+`example/` é a galeria:
+
+- **Fundamentos:** logo, cores, tipografia e tons.
+- **Componentes:** Botões, Campos, Seleção, Cards e tiles, Estados.
+- **Telas de exemplo:** Cadastro (validação igual à do `POST /auth/register`),
+  "Hoje" e "Onde é minha aula?", montadas só com componentes.
+
+O botão no topo de todas as páginas alterna o tema claro/escuro.
+
+As mudanças de cada versão estão no [`CHANGELOG.md`](CHANGELOG.md).

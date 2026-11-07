@@ -1,6 +1,6 @@
 name: uniplan_design_system
 description: Tokens, tema e componentes do app UniPlan.
-version: 1.0.0
+version: 1.1.0
 publish_to: none
 
 environment:
