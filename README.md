@@ -14,6 +14,7 @@ cabeça. O aluno só descobre que está em risco quando já é tarde.
 o que eu tenho hoje, o que vence logo e como estou em cada matéria.
 
 **Funcionalidades**
+- **Login e Cadastro:** logo do UniPlan, mostrar/ocultar senha, "Esqueci minha senha" e criação de conta com validação ao digitar.
 - **Hoje:** aulas do dia (com bloco e sala), próximas entregas, média geral, número de pendências e quanto do semestre já passou.
 - **Notificações:** pelo sino da Home, com prazos próximos, notas lançadas, alerta de faltas e aulas do dia, além de "Marcar todas como lidas".
 - **Onde é minha aula?:** salas da semana escolhendo o dia (Seg a Sáb). Cada aula mostra horário, bloco, sala e andar, com busca por disciplina, bloco ou sala.
@@ -21,9 +22,18 @@ o que eu tenho hoje, o que vence logo e como estou em cada matéria.
 - **Detalhe da disciplina:** atividades com peso e nota, além do botão "+1 falta".
 - **Atividades:** agenda agrupada por dia, filtro *Pendentes / Entregues / Todas*, busca e caixa para marcar como entregue.
 - **Nova atividade:** título, disciplina, tipo (Prova, Trabalho, Lista ou Seminário), prazo, peso e observação.
-- **Perfil:** dados do aluno, semestre atual, tema claro/escuro e sair.
+- **Perfil:** dados do aluno, semestre atual, tema claro/escuro e sair (com confirmação, volta para o Login).
+- **Editar perfil:** foto (galeria ou câmera), nome, curso, período, semestre letivo e datas do semestre.
 
-**Telas (protótipo, em `docs/prototipo/`):** Login · Hoje · Notificações · Onde é minha aula? · Disciplinas · Detalhe da disciplina · Atividades · Nova atividade · Perfil.
+**Telas (protótipo, em `docs/prototipo/`):** Login · Cadastro · Hoje · Notificações · Onde é minha aula? · Disciplinas · Detalhe da disciplina · Atividades · Nova atividade · Perfil · Editar perfil.
+
+## Telas
+
+| Login | Hoje | Onde é minha aula? | Perfil (escuro) |
+|---|---|---|---|
+| ![Login](docs/prototipo/01-login.png) | ![Hoje](docs/prototipo/02-hoje.png) | ![Salas](docs/prototipo/04-salas.png) | ![Perfil](docs/prototipo/escuro/09-perfil.png) |
+
+Todas as telas, claras e escuras, estão em [`docs/prototipo/`](docs/prototipo/).
 
 ## Organização
 
@@ -31,6 +41,7 @@ o que eu tenho hoje, o que vence logo e como estou em cada matéria.
 uniplan/
 ├── docs/
 │   ├── API.md               # contrato da API: requests, responses e erros
+│   ├── marca/               # logo do UniPlan (SVG)
 │   └── prototipo/           # telas do protótipo (imagens exportadas do canvas)
 └── packages/
     └── design_system/       # uniplan_design_system
@@ -55,6 +66,7 @@ lib/
 └── scenes/              # uma pasta por cena, sempre com os mesmos 5 papéis
     ├── splash/          # tela invisível: decide Login ou Hoje
     ├── login/
+    ├── register/        # cadastro
     ├── today/           # inclui o pop-up de notificações
     ├── rooms/           # "Onde é minha aula?"
     ├── subjects/
