@@ -86,6 +86,13 @@ void main() {
     });
   });
 
+  group('AvatarViewModel editável', () {
+    test('só vira botão com onEdit', () {
+      expect(const AvatarViewModel(name: 'Emilly').editable, isFalse);
+      expect(AvatarViewModel(name: 'Emilly', onEdit: () {}).editable, isTrue);
+    });
+  });
+
   group('AvatarViewModel.initials', () {
     test('primeira e última inicial', () {
       expect(const AvatarViewModel(name: 'Emilly Reis').initials, 'ER');
